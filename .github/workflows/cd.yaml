@@ -1,0 +1,29 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: "Pegar código do repositório"
+        uses: actions/checkout@v3
+
+      - name: "Configurar python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      
+      - name: "Instalar o CLI do Railway"
+        run: curl -fsSl https://railway.app/install.sh | sh
+
+      - name: "Deploy para o Railway"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up
+
