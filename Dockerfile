@@ -6,4 +6,4 @@ COPY . .
 
 RUN pip install --no-cache-dir --trusted-host pypi.python.org -r requirements.txt
 
-CMD ["python", "run.py", "--host=0.0.0.0"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "run:app"]

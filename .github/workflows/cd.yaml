@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+      - test
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
   
     steps:
@@ -18,12 +19,24 @@ jobs:
         with:
           python-version: 3.11
       
-      - name: "Instalar o CLI do Railway"
-        run: curl -fsSl https://railway.app/install.sh | sh
+      - name: "Login to Azure"
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: "Deploy para o Railway"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: "Dar build e pushar para o ACR"
         run: |
-          railway up
+          az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}
+          docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/ferroviaria-api-py:latest .
+          docker push ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/ferroviaria-api-py:latest
+      
+      - name: "Dar deploy em um Serviço de Aplicativo usando a imagem no container"
+        run: |
+          az webapp config container set \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_APP_NAME }} \
+            --docker-custom-image-name ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/ferroviaria-api-py:latest \
+            --docker-registry-server-url https://${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io \
+            --docker-registry-server-user ${{ secrets.AZURE_REGISTRY_USERNAME }} \
+            --docker-registry-server-password ${{ secrets.AZURE_REGISTRY_PASSWORD }}
 

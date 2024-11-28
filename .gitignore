@@ -11,3 +11,5 @@ __pycache__/
 
 # Arquivos de cache do Python
 *.pyo
+
+.secrets
